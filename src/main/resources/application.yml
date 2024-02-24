@@ -4,6 +4,8 @@ spring:
     url: jdbc:mariadb://localhost:3306/testDB
     username: root
     password: hwryu990927!
+    hikari:
+      maximum-pool-size: 40
 
   jpa:
     show-sql: true

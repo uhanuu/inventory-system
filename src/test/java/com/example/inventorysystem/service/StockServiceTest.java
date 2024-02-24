@@ -1,9 +1,9 @@
 package com.example.inventorysystem.service;
 
 import com.example.inventorysystem.domain.Stock;
+import com.example.inventorysystem.facade.NamedLockStockFacade;
 import com.example.inventorysystem.facade.OptimisticLockStockFacade;
 import com.example.inventorysystem.repository.StockRepository;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,6 +17,7 @@ import java.util.concurrent.Executors;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+// test 따로 돌려야 된다.
 @SpringBootTest
 class StockServiceTest {
 
@@ -26,6 +27,8 @@ class StockServiceTest {
     private StockRepository stockRepository;
     @Autowired
     private OptimisticLockStockFacade optimisticLockStockFacade;
+    @Autowired
+    private NamedLockStockFacade namedLockStockFacade;
 
     @BeforeEach
     void setUp() {
@@ -158,4 +161,31 @@ class StockServiceTest {
         assertThat(stock.getVersion()).isEqualTo(100);
     }
 
+    //get_lock을 통해서 lock을 거는데 stock에다가 락을 거는게 아니라 table내에 별도의 공간에 lock을 건다.
+    // 분산락을 구현할 때 사용한다. (pessimistic lock은 타임아웃을 구현하기 힘들지만 namedLock은 구현하기 쉬움 트랜잭션 세션관리 주의하기)
+    @Test
+    public void namedLock을_통해서_동시에_100개의_요청() throws InterruptedException {
+        //given
+        long stockId = 1L;
+        int threadCount = 100;
+        ExecutorService executorService = Executors.newFixedThreadPool(32);
+        CountDownLatch latch = new CountDownLatch(threadCount);
+
+        //when
+        for (int i = 0; i < threadCount; i++) {
+            executorService.submit(() -> {
+                try {
+                    namedLockStockFacade.decrease(stockId, 1L);
+                } finally {
+                    latch.countDown();
+                }
+            });
+        }
+
+        latch.await();
+
+        //then
+        Stock stock = stockRepository.findById(stockId).orElseThrow();
+        assertThat(stock.getQuantity()).isEqualTo(0);
+    }
 }
