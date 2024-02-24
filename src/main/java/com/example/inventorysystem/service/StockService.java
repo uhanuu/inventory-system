@@ -22,4 +22,13 @@ public class StockService {
         Stock stock = stockRepository.findById(stockId).orElseThrow();
         stock.decrease(quantity);
     }
+
+    @Transactional
+    public synchronized void decreaseWithSync(Long stockId, long quantity) {
+        // stock 조회
+        // 재고를 감소
+        // 갱신된 값을 저장
+        Stock stock = stockRepository.findById(stockId).orElseThrow();
+        stock.decrease(quantity);
+    }
 }
