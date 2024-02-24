@@ -42,7 +42,13 @@ public class StockService {
     // 부모 트랜잭션과 별도로 실행하기 위해서 설정
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void decreaseWithNamedLock(Long stockId, long quantity) {
-        Stock stock = stockRepository.findByIdWithOptimisticLock(stockId).orElseThrow();
+        Stock stock = stockRepository.findById(stockId).orElseThrow();
+        stock.decrease(quantity);
+    }
+
+    @Transactional
+    public void decreaseWithRedisLettuce(Long stockId, long quantity) {
+        Stock stock = stockRepository.findById(stockId).orElseThrow();
         stock.decrease(quantity);
     }
 }
