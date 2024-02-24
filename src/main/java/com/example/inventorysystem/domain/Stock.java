@@ -1,9 +1,6 @@
 package com.example.inventorysystem.domain;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 
 @Entity
 public class Stock {
@@ -16,6 +13,11 @@ public class Stock {
 
     private long quantity;
 
+    //Optimistic Lock을 위한 필드
+    @Version
+    private Long version;
+
+
     protected Stock() {
     }
 
@@ -24,15 +26,19 @@ public class Stock {
         this.quantity = quantity;
     }
 
-    public Long getQuantity() {
-        return quantity;
-    }
-
     public void decrease(long quantity) {
         if (this.quantity - quantity < 0) {
             throw new IllegalArgumentException("재고는 0개 미만이 될 수 없습니다.");
         }
 
         this.quantity -= quantity;
+    }
+
+    public Long getQuantity() {
+        return quantity;
+    }
+
+    public Long getVersion() {
+        return version;
     }
 }
