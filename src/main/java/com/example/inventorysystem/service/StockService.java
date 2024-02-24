@@ -51,4 +51,10 @@ public class StockService {
         Stock stock = stockRepository.findById(stockId).orElseThrow();
         stock.decrease(quantity);
     }
+
+    @Transactional
+    public void decreaseWithRedisson (Long stockId, long quantity) {
+        Stock stock = stockRepository.findById(stockId).orElseThrow();
+        stock.decrease(quantity);
+    }
 }
