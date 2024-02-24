@@ -97,4 +97,31 @@ class StockServiceTest {
         assertThat(stock.getQuantity()).isNotEqualTo(0);
     }
 
+    //충돌이 빈번하게 일어나면 Optimistic Lock보다 성능이 좋다.
+    @Test
+    public void PessimisticLock을_통해서_동시에_100개의_요청() throws InterruptedException {
+        //given
+        long stockId = 1L;
+        int threadCount = 100;
+        ExecutorService executorService = Executors.newFixedThreadPool(32);
+        CountDownLatch latch = new CountDownLatch(threadCount);
+
+        //when
+        for (int i = 0; i < threadCount; i++) {
+            executorService.submit(() -> {
+                try {
+                    stockService.decreaseWithPessimisticLock(stockId, 1L);
+                } finally {
+                    latch.countDown();
+                }
+            });
+        }
+
+        latch.await();
+
+        //then
+        Stock stock = stockRepository.findById(stockId).orElseThrow();
+        assertThat(stock.getQuantity()).isEqualTo(0);
+    }
+
 }
